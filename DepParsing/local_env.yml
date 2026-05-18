@@ -5,7 +5,8 @@ channels:
 dependencies:
   # - python=3.7
   - python=3.10
-  - numpy
+  # - numpy
+  - numpy<2
   - tqdm
   - docopt
   # - pytorch

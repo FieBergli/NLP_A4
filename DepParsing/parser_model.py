@@ -72,8 +72,27 @@ class ParserModel(nn.Module):
         ### 
         ### See the PDF for hints.
 
+        # input size after concatenating all feature embeddings
+        input_size = self.n_features * self.embed_size
 
+        # W: maps concatenated embeddings x to hidden layer h
+        self.embed_to_hidden_weight = nn.Parameter(torch.empty(input_size, self.hidden_size))
+        nn.init.xavier_uniform_(self.embed_to_hidden_weight)
 
+        # b1: bias for hidden layer
+        self.embed_to_hidden_bias = nn.Parameter(torch.empty(self.hidden_size))
+        nn.init.uniform_(self.embed_to_hidden_bias)
+
+        # dropout layer
+        self.dropout = nn.Dropout(self.dropout_prob)
+
+        # U: maps hidden layer h to logits l
+        self.hidden_to_logits_weight = nn.Parameter(torch.empty(self.hidden_size, self.n_classes))
+        nn.init.xavier_uniform_(self.hidden_to_logits_weight)
+
+        # b2: bias for logits/output layer
+        self.hidden_to_logits_bias = nn.Parameter(torch.empty(self.n_classes))
+        nn.init.uniform_(self.hidden_to_logits_bias)
 
         ### END YOUR CODE
 
@@ -106,7 +125,8 @@ class ParserModel(nn.Module):
         ###     View: https://pytorch.org/docs/stable/tensors.html#torch.Tensor.view
         ###     Flatten: https://pytorch.org/docs/stable/generated/torch.flatten.html
 
-
+        x = self.embeddings[w]
+        x = x.view(w.shape[0], self.n_features * self.embed_size)
 
         ### END YOUR CODE
         return x
@@ -143,6 +163,11 @@ class ParserModel(nn.Module):
         ###     Matrix product: https://pytorch.org/docs/stable/torch.html#torch.matmul
         ###     ReLU: https://pytorch.org/docs/stable/nn.html?highlight=relu#torch.nn.functional.relu
 
+        x = self.embedding_lookup(w)
+        h = torch.matmul(x, self.embed_to_hidden_weight) + self.embed_to_hidden_bias
+        h = F.relu(h)
+        h = self.dropout(h)
+        logits = torch.matmul(h, self.hidden_to_logits_weight) + self.hidden_to_logits_bias
 
         ### END YOUR CODE
         return logits
