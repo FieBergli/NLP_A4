@@ -31,7 +31,9 @@ class PartialParse(object):
         ### Note: The root token should be represented with the string "ROOT"
         ### Note: If you need to use the sentence object to initialize anything, make sure to not directly 
         ###       reference the sentence object.  That is, remember to NOT modify the sentence object. 
-
+        self.stack = ["ROOT"]
+        self.buffer = sentence[:]
+        self.dependencies = []
 
         ### END YOUR CODE
 
@@ -50,7 +52,20 @@ class PartialParse(object):
         ###         1. Shift
         ###         2. Left Arc
         ###         3. Right Arc
+        if transition == "S":
+            self.stack.append(self.buffer.pop(0))
 
+        elif transition == "LA":
+            head = self.stack[-1]
+            dependent = self.stack[-2]
+            self.dependencies.append((head, dependent))
+            self.stack.pop(-2)
+
+        elif transition == "RA":
+            head = self.stack[-2]
+            dependent = self.stack[-1]
+            self.dependencies.append((head, dependent))
+            self.stack.pop()
 
         ### END YOUR CODE
 
@@ -102,7 +117,22 @@ def minibatch_parse(sentences, model, batch_size):
     ###             to remove objects from the `unfinished_parses` list. This will free the underlying memory that
     ###             is being accessed by `partial_parses` and may cause your code to crash.
 
+    partial_parses = [PartialParse(sentence) for sentence in sentences]
+    unfinished_parses = partial_parses[:]
 
+    while len(unfinished_parses) > 0:
+        minibatch = unfinished_parses[:batch_size]
+        transitions = model.predict(minibatch)
+
+        for partial_parse, transition in zip(minibatch, transitions):
+            partial_parse.parse_step(transition)
+
+        unfinished_parses = [
+            partial_parse for partial_parse in unfinished_parses
+            if not (len(partial_parse.buffer) == 0 and len(partial_parse.stack) == 1)
+        ]
+
+    dependencies = [partial_parse.dependencies for partial_parse in partial_parses]
     ### END YOUR CODE
 
     return dependencies
