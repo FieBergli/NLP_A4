@@ -124,9 +124,11 @@ def minibatch_parse(sentences, model, batch_size):
         minibatch = unfinished_parses[:batch_size]
         transitions = model.predict(minibatch)
 
+        # apply predicted transition
         for partial_parse, transition in zip(minibatch, transitions):
             partial_parse.parse_step(transition)
 
+        # take out finished parses
         unfinished_parses = [
             partial_parse for partial_parse in unfinished_parses
             if not (len(partial_parse.buffer) == 0 and len(partial_parse.stack) == 1)
