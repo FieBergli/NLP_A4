@@ -16,6 +16,7 @@ dependencies:
   - nltk
   - spacy
   - pytorch
+  - stanza
   - pip:
       - transformers
       - datasets
